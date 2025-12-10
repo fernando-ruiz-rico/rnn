@@ -22,7 +22,7 @@ tf.random.set_seed(seed)
 
 ARCHIVO_MODELO = 'modelos/texto_predictivo_modelo.keras'
 ARCHIVO_TOKENIZADOR = 'modelos/texto_predictivo_tokenizador.pkl'
-ARCHIVO_DATOS = 'csv/texto_predictivo_datos.csv'
+ARCHIVO_DATOS = 'csv/texto_predictivo.csv'
 
 tokenizer = None
 modelo = None
