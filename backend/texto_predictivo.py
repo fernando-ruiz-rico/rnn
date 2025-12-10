@@ -40,7 +40,7 @@ def cargar_datos(ruta_csv):
         return ['hola cómo estás', 'buenos días', 'buenas noches', 'estoy bien gracias', 'buen día para ti también', 'que descanses']
     
     df = pd.read_csv(ruta_csv)
-    data = df['frases'].dropna().drop_duplicates().tolist()
+    data = df['frase'].dropna().drop_duplicates().tolist()
     return [limpiar_texto(frase) for frase in data]
 
 
