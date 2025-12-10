@@ -33,6 +33,7 @@ def limpiar_texto(texto):
     texto = re.sub(r'[^\w\s]', '', texto)
     return texto
 
+
 def cargar_datos(ruta_csv):
     if not os.path.exists(ruta_csv):
         print(f"El archivo {ruta_csv} no existe.")
@@ -41,6 +42,7 @@ def cargar_datos(ruta_csv):
     df = pd.read_csv(ruta_csv)
     data = df['frases'].dropna().drop_duplicates().tolist()
     return [limpiar_texto(frase) for frase in data]
+
 
 def preparar_datos(frases):
     tokenizer = Tokenizer()
@@ -63,3 +65,45 @@ def preparar_datos(frases):
 
     return xs, ys, max_len, total_words, tokenizer
 
+
+def crear_modelo(total_words, embedding_dim, input_length):
+    modelo = Sequential([
+        Embedding(total_words, embedding_dim, input_length=input_length),
+        LSTM(128),
+        Dense(total_words, activation='softmax')
+    ]);
+    modelo.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+    return modelo
+
+
+def predecir_texto(semilla, num_palabras=10):
+    texto_actual = limpiar_texto(semilla)
+
+    siguiente_palabra = predecir_proxima_palabra(texto_actual)
+
+    for _ in range(num_palabras):
+        siguiente_palabra = predecir_proxima_palabra(texto_actual)
+
+        if siguiente_palabra:
+            ultima_palabra = texto_actual.split()[-1]
+            if siguiente_palabra != ultima_palabra:
+                texto_actual += ' ' + siguiente_palabra
+            else:
+                break
+        else:
+            break
+
+    return texto_actual.capitalize()
+
+
+def predecir_proxima_palabra(texto):
+    token_list = tokenizar.texts_to_sequences([texto])[0]
+    token_list = pad_sequences([token_list], maxlen=max_sequence_length-1, padding='pre')
+    
+    prediccion = modelo.predict(token_list, verbose=0)[0]
+    indice_ganador = np.argmax(prediccion)
+
+    if prediccion[indice_ganador] < 0.1:
+        return None
+
+    return tokenizar.index_word[indice_ganador]
