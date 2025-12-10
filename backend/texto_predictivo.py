@@ -121,7 +121,9 @@ def inicializar():
 
     else:
         frases = cargar_datos(ARCHIVO_DATOS)
-        tokenizer, total_words, max_sequence_length, xs, ys = preparar_datos(frases)
+        print(frases)
+
+        xs, ys, max_sequence_length, total_words, tokenizer = preparar_datos(frases)
 
         modelo = crear_modelo(total_words, 128, max_sequence_length-1)
 
