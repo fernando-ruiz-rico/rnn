@@ -28,7 +28,9 @@ def obtener_datos(empresa, periodo='1y'):
     if df.empty:
         raise ValueError(f"No se encontraron datos para la empresa: {empresa}")
     
-    if isinstance(df.index, pd.DatetimeIndex):
+    print(df)
+
+    if isinstance(df.columns, pd.MultiIndex):
         try:
             serie = df.xs('Close', axis=1, level=0)
             if serie.empty:
@@ -37,13 +39,13 @@ def obtener_datos(empresa, periodo='1y'):
         except:
             return df.iloc[:, 0]
         
+    print(df)
+
     if 'Close' in df.columns:
         return df['Close']
     return df.iloc[:, 0]
 
 def preparar_datos_para_rnn(datos, ventana=60):
-    datos = datos.values.reshape(-1, 1)
-
     scaler = MinMaxScaler(feature_range=(0, 1))
 
     datos_array = datos.values.reshape(-1, 1)
