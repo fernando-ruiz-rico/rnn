@@ -84,7 +84,7 @@ def predecir_futuro(modelo, ultimos_datos_reales, scaler, dias_a_predecir=60):
     secuencia_actual = ultimos_datos_reales.copy()
 
     for _ in range(dias_a_predecir):
-        x_input = np.reshape(secuencia_actual, (1, secuencia_actual.shape[0], 1))
+        x_input = np.reshape(secuencia_actual, (1, len(secuencia_actual), 1))
 
         prediccion_dia = modelo.predict(x_input, verbose=0)[0][0]
         predicciones.append(prediccion_dia)
@@ -100,40 +100,44 @@ def predecir_futuro(modelo, ultimos_datos_reales, scaler, dias_a_predecir=60):
     return predicciones_reales.ravel()
 
 def generar_grafico_predicciones(empresa='APAPL', periodo='1y', epochs=50):
-    datos_cierre = obtener_datos(empresa, periodo)
+    try:
+        datos_cierre = obtener_datos(empresa, periodo)
 
-    print(datos_cierre)
+        print(datos_cierre)
 
-    ventana = 60
-    X, y, scaler = preparar_datos_para_rnn(datos_cierre, ventana)
+        X, y, scaler = preparar_datos_para_rnn(datos_cierre)
 
-    modelo = crear_red_neuronal_rnn((X.shape[1], 1))
+        modelo = crear_red_neuronal_rnn((X.shape[1], 1))
 
-    modelo.fit(X, y, epochs=epochs, batch_size=32, verbose=0, shuffle=False)
+        modelo.fit(X, y, epochs=epochs, batch_size=32, verbose=0, shuffle=False)
 
-    ulitimos_60_dias = scaler.transform(datos_cierre.values[-ventana:].reshape(-1, 1))
-    prediciones = predecir_futuro(modelo, ulitimos_60_dias, scaler)
+        ulitimos_60_dias = scaler.transform(datos_cierre.values[-ventana:].reshape(-1, 1))
+        prediciones = predecir_futuro(modelo, ulitimos_60_dias, scaler)
 
-    plt.figure(figsize=(10, 6.5))
+        plt.figure(figsize=(10, 6.5))
 
-    datos_recientes = datos_cierre.iloc[-120:]
-    plt.plot(datos_recientes.index, datos_recientes.values, label='Datos Reales', color='b')
+        datos_recientes = datos_cierre.iloc[-120:]
+        plt.plot(datos_recientes.index, datos_recientes.values, label='Datos Reales', color='b')
 
-    ultima_fecha = datos_recientes.index[-1]
-    fechas_futuras = pd.date_range(start=ultima_fecha, periods=len(prediciones)+1)[1:]
+        ultima_fecha = datos_recientes.index[-1]
+        fechas_futuras = pd.date_range(start=ultima_fecha, periods=len(prediciones)+1)[1:]
 
-    plt.plot(fechas_futuras, prediciones, label='Predicciones Futuras', color='r', linestyle='--')
+        plt.plot(fechas_futuras, prediciones, label='Predicciones Futuras', color='r', linestyle='--')
 
-    plt.title(f'Predicción de Precios para {empresa}', fontsize=16)
-    plt.xlabel('Fecha', fontsize=14)
-    plt.ylabel('Precio', fontsize=14)
-    plt.legend()
-    plt.grid(True, alpha=0.3)
-    plt.tight_layout()
+        plt.title(f'Predicción de Precios para {empresa}', fontsize=16)
+        plt.xlabel('Fecha', fontsize=14)
+        plt.ylabel('Precio', fontsize=14)
+        plt.legend()
+        plt.grid(True, alpha=0.3)
+        plt.tight_layout()
 
-    img = BytesIO()
-    plt.savefig(img, format='png')
-    img.seek(0)
-    plt.close()
+        img = BytesIO()
+        plt.savefig(img, format='png')
+        img.seek(0)
+        plt.close()
 
-    return img
+        return img
+    
+    except Exception as e:
+        print(f"Error al generar la gráfica de predicciones: {e}")
+        return None
