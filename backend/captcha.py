@@ -76,7 +76,7 @@ def construir_discriminador():
     return model
 
 
-def cargar_o_entrenar():
+def entrenar_y_guardar():
     if not os.path.exists('modelos'):
         os.makedirs('modelos')
 
@@ -101,8 +101,8 @@ def cargar_o_entrenar():
 
     cross_entropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
 
-    gen_optimizer = tf.keras.optimizers.Adam(1e-4)
-    disc_optimizer = tf.keras.optimizers.Adam(1e-4)
+    gen_opt = tf.keras.optimizers.Adam(1e-4)
+    disc_opt = tf.keras.optimizers.Adam(1e-4)
 
     @tf.function
     def train_step(real_images):
@@ -119,14 +119,11 @@ def cargar_o_entrenar():
             disc_loss = cross_entropy(tf.ones_like(real_output), real_output) + \
                         cross_entropy(tf.zeros_like(fake_output), fake_output)
 
-    grads_gen = gen_tape.gradient(gen_loss, generador.trainable_variables)
-    grads_disc = disc_tape.gradient(disc_loss, discriminador.trainable_variables)
+        grads_gen = gen_tape.gradient(gen_loss, generador.trainable_variables)
+        grads_disc = disc_tape.gradient(disc_loss, discriminador.trainable_variables)
 
-    gen_optimizer.apply_gradients(zip(grads_gen, generador.trainable_variables))
-    disc_optimizer.apply_gradients(zip(grads_disc, discriminador.trainable_variables))
-
-    gen_opt.apply_gradients(zip(grads_gen, generador.trainable_variables))
-    disc_opt.apply_gradients(zip(grads_disc, discriminador.trainable_variables))
+        gen_opt.apply_gradients(zip(grads_gen, generador.trainable_variables))
+        disc_opt.apply_gradients(zip(grads_disc, discriminador.trainable_variables))
 
     for epoch in range(EPOCHS_GAN):
         start = time.time()
@@ -137,6 +134,16 @@ def cargar_o_entrenar():
         print(f'Epoch {epoch + 1}, tiempo: {time.time() - start:.2f} segundos')
 
     generador.save(NOMBRE_ARCHIVO_GENERADOR)
+    return generador, lector
+
+def cargar_o_entrenar():
+    if os.path.exists(NOMBRE_ARCHIVO_GENERADOR) and os.path.exists(NOMBRE_ACCHIVO_LECTOR):
+        print("Cargando modelos existentes...")
+        generador = tf.keras.models.load_model(NOMBRE_ARCHIVO_GENERADOR)
+        lector = tf.keras.models.load_model(NOMBRE_ACCHIVO_LECTOR)
+    else:
+        print("Modelos no encontrados. Iniciando entrenamiento...")
+        generador, lector = entrenar_y_guardar()
     return generador, lector
 
 def inicializar():
@@ -162,7 +169,7 @@ def generar_captcha():
     plt.figure(figsize=(10, 4))
     for i in range(4):
         plt.subplot(1, 4, i + 1)
-        plt.imshow(imagenes_falsas[i, :, :, 0], cmap='gray')
+        plt.imshow(imagenes_para_lector[i, :, :, 0], cmap='gray')
         plt.axis('off')
 
     img = BytesIO()
