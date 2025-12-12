@@ -105,7 +105,8 @@ def generar_grafico_predicciones(empresa='APAPL', periodo='1y', epochs=50):
 
         print(datos_cierre)
 
-        X, y, scaler = preparar_datos_para_rnn(datos_cierre)
+        ventana = 60
+        X, y, scaler = preparar_datos_para_rnn(datos_cierre, ventana)
 
         modelo = crear_red_neuronal_rnn((X.shape[1], 1))
 
