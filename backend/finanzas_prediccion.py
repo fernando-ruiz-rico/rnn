@@ -27,8 +27,6 @@ def obtener_datos(empresa, periodo='1y'):
     
     if df.empty:
         raise ValueError(f"No se encontraron datos para la empresa: {empresa}")
-    
-    print(df)
 
     if isinstance(df.columns, pd.MultiIndex):
         try:
@@ -38,8 +36,6 @@ def obtener_datos(empresa, periodo='1y'):
             return serie
         except:
             return df.iloc[:, 0]
-        
-    print(df)
 
     if 'Close' in df.columns:
         return df['Close']
