@@ -106,7 +106,7 @@ def entrenar_y_guardar():
 
     @tf.function
     def train_step(real_images):
-        noise = tf.random.nomal([BATCH_SIZE, Z_SIZE])
+        noise = tf.random.normal([BATCH_SIZE, Z_SIZE])
 
         with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
             generated_images = generador(noise, training=True)
