@@ -48,7 +48,10 @@ def obtener_datos(empresa, periodo='1y'):
 def preparar_datos_para_rnn(datos, ventana=60):
     scaler = MinMaxScaler(feature_range=(0, 1))
 
-    datos_array = datos.values.reshape(-1, 1)
+    if isinstance(datos, pd.Series):
+        datos_array = datos.values.reshape(-1, 1)
+    else:
+        datos_array = np.array(datos).reshape(-1, 1)
 
     scaler.fit(datos_array[:len(datos_array)])
 
