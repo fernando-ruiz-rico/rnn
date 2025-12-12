@@ -7,8 +7,23 @@ import yfinance as yf
 from io import BytesIO
 
 def obtener_datos(empresa, periodo='1y'):
-    datos = yf.download(empresa, period=periodo)
-    return datos
+    df = yf.download(empresa, period=periodo, progress=False, auto_adjust=True)
+    
+    if df.empty:
+        raise ValueError(f"No se encontraron datos para la empresa: {empresa}")
+
+    if isinstance(df.columns, pd.MultiIndex):
+        try:
+            serie = df.xs('Close', axis=1, level=0)
+            if serie.empty:
+                serie = df.xs(empresa, axis=1, level=1)['Close']
+            return serie
+        except:
+            return df.iloc[:, 0]
+
+    if 'Close' in df.columns:
+        return df['Close']
+    return df.iloc[:, 0]
 
 def generar_grafico_empresas(empresa, periodo):
     datos = obtener_datos(empresa, periodo)
@@ -22,7 +37,7 @@ def generar_grafico_empresas(empresa, periodo):
         fecha_formateada = fecha_obj.strftime('%d %b %Y')
 
         fechas.append(fecha_formateada)
-        precios_cierre.append(datos.loc[fecha, 'Close'])
+        precios_cierre.append(datos.loc[fecha])
 
     plt.figure(figsize=(10, 6.5))
 
