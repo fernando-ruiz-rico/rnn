@@ -55,8 +55,8 @@ async function cargarNuevoCaptcha() {
 
     if (data.error) throw new Error(data.error);
 
-    imgElement.src = "data:image/png;base64," + data.imagen_base64;
-    solucionCorrecta = data.solucion_real;
+    imgElement.src = "data:image/png;base64," + data.img;
+    solucionCorrecta = data.solucion;
     
     // Debug
     console.log("Solución (Debug):", solucionCorrecta);
