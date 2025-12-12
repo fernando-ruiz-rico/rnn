@@ -99,7 +99,7 @@ def predecir_futuro(modelo, ultimos_datos_reales, scaler, dias_a_predecir=60):
 
     return predicciones_reales.ravel()
 
-def generar_grafico_predicciones(empresa='APAPL', periodo='1y', epochs=50):
+def generar_grafico_predicciones(empresa='AAPL', periodo='1y', epochs=50):
     try:
         datos_cierre = obtener_datos(empresa, periodo)
 
@@ -112,8 +112,8 @@ def generar_grafico_predicciones(empresa='APAPL', periodo='1y', epochs=50):
 
         modelo.fit(X, y, epochs=epochs, batch_size=32, verbose=0, shuffle=False)
 
-        ulitimos_60_dias = scaler.transform(datos_cierre.values[-ventana:].reshape(-1, 1))
-        prediciones = predecir_futuro(modelo, ulitimos_60_dias, scaler)
+        ultimos_60_dias = scaler.transform(datos_cierre.values[-ventana:].reshape(-1, 1))
+        predicciones = predecir_futuro(modelo, ultimos_60_dias, scaler)
 
         plt.figure(figsize=(10, 6.5))
 
@@ -121,9 +121,9 @@ def generar_grafico_predicciones(empresa='APAPL', periodo='1y', epochs=50):
         plt.plot(datos_recientes.index, datos_recientes.values, label='Datos Reales', color='b')
 
         ultima_fecha = datos_recientes.index[-1]
-        fechas_futuras = pd.date_range(start=ultima_fecha, periods=len(prediciones)+1)[1:]
+        fechas_futuras = pd.date_range(start=ultima_fecha, periods=len(predicciones)+1)[1:]
 
-        plt.plot(fechas_futuras, prediciones, label='Predicciones Futuras', color='r', linestyle='--')
+        plt.plot(fechas_futuras, predicciones, label='Predicciones Futuras', color='r', linestyle='--')
 
         plt.title(f'Predicción de Precios para {empresa}', fontsize=16)
         plt.xlabel('Fecha', fontsize=14)
