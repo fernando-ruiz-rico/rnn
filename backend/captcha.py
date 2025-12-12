@@ -10,8 +10,8 @@ import os
 import time
 from io import BytesIO
 
-NOMBRE_ARCHIVO_GENERADOR = "modelos/captcha_generador.keras"
-NOMBRE_ACCHIVO_LECTOR = "modelos/captcha_lector.keras"
+NOMBRE_ARCHIVO_GENERADOR = "modelos/captcha_generador_100e.keras"
+NOMBRE_ACCHIVO_LECTOR = "modelos/captcha_lector_100e.keras"
 
 BATCH_SIZE = 64
 Z_SIZE = 100
