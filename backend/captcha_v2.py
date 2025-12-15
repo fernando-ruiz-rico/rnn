@@ -176,11 +176,10 @@ def generar_captcha_v2():
     indices_etiquetas = np.argmax(predicciones, axis=1)
     etiquetas = [NOMBRES_PRENDAS[i] for i in indices_etiquetas]
 
-    plt.figure(figsize=(6, 6))
+    plt.figure(figsize=(10, 4))
     for i in range(cantidad_imagenes):
-        plt.subplot(2, 2, i + 1)
+        plt.subplot(1, 4, i + 1)
         plt.imshow(imagenes_para_lector[i, :, :, 0], cmap='gray')
-        plt.title(etiquetas[i])
         plt.axis('off')
 
     img = BytesIO()
