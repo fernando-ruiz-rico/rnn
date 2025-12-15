@@ -22,13 +22,13 @@ def preprocesar_texto(text):
 def enternar_modelo(csv_path):
     df = pd.read_csv(csv_path)
 
-    df = df.drop_duplicates(subset='emoji')
+    df = df.drop_duplicates(subset='emojis')
     df['palabras'] = df['palabras'].apply(preprocesar_texto)
 
     vectorizer = TfidfVectorizer(ngram_range=(1, 3))
     X = vectorizer.fit_transform(df['palabras'])
 
-    modelo = MultinomialNB().fit(X, df['emoji'])
+    modelo = MultinomialNB().fit(X, df['emojis'])
 
     return {'modelo': modelo, 'vectorizer': vectorizer}
 
@@ -49,7 +49,7 @@ def traducir_a_emojis(modelo_emojis, texto, num_emojis=5):
         similitud = round(probabilidades[idx] * 100, 2)
 
         if similitud > 0.10:
-            resultado.append({'emoji': emoji, 'similitud': similitud})
+            resultado.append({'emojis': emoji, 'similitud': similitud})
 
     return resultado
 
