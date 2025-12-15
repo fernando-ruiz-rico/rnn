@@ -10,7 +10,7 @@ import os
 import time
 from io import BytesIO
 
-NOMBRE_ARCHIVO_GENERADOR = "modelos/moda_generador_150e.keras"
+NOMBRE_ARCHIVO_GENERADOR = "modelos/moda_generador_10e.keras"
 
 BATCH_SIZE = 64
 Z_SIZE = 100
