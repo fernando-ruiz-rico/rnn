@@ -1,7 +1,7 @@
 // Variables globales
 let solucionCorrecta = []; // Ahora es un Array, no un string
-let intentosRestantes = 3;
-const MAX_INTENTOS = 3;
+let intentosRestantes = 5;
+const MAX_INTENTOS = 5;
 
 // Inicialización
 function inicializar() {

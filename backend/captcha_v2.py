@@ -149,7 +149,7 @@ def entrenar_y_guardar():
         print(f'Epoch {epoch + 1} / {EPOCHS_GAN}, tiempo: {time.time() - start:.2f} segundos')
 
     generador.save(NOMBRE_ARCHIVO_GENERADOR)
-    return generador
+    return generador, lector
 
 def cargar_o_entrenar():
     if os.path.exists(NOMBRE_ARCHIVO_GENERADOR) and os.path.exists(NOMBRE_ARCHIVO_LECTOR):
