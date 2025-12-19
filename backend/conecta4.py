@@ -132,7 +132,7 @@ def obtener_mejor_movimiento(tablero_lista):
 
     for col in ranking_columnas:
         if col in validas:
-            return col
+            return int(col)
         
     return random.choice(validas)
 
