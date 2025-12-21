@@ -1,27 +1,44 @@
-// Variables globales
-// Guardamos la solución real que nos manda el back para comparar luego (ojo, en un entorno real muy seguro esto no debería estar tan expuesto, pero para esto sirve).
+/**
+ * index.js
+ * Lógica del frontend para la gestión del ciclo de vida del Captcha.
+ *
+ * NOTA DE ARQUITECTURA:
+ * La validación se está realizando en el lado del cliente (Client-Side Validation) por simplicidad
+ * en este entorno de demostración. En un entorno de producción estricto, la validación debería
+ * realizarse siempre en el servidor para evitar la manipulación de la variable 'solucionCorrecta'.
+ */
+
+// --- ESTADO GLOBAL ---
+
+// Almacenamiento temporal de la solución hash/texto proveniente del backend.
+// [SEGURIDAD] Expuesto en memoria del navegador. Vulnerable a inspección si no se ofusca o valida en servidor.
 let solucionCorrecta = "";
-// Control de vidas del usuario. Empezamos con 3.
+
+// Gestión de intentos del usuario.
 let intentosRestantes = 3;
 const MAX_INTENTOS = 3;
 
-// Inicialización
-// Aquí arrancamos todo: listeners de botones y primera carga.
+// --- INICIALIZACIÓN ---
+
+/**
+ * Función de arranque.
+ * Configura los listeners de eventos y dispara la primera carga de datos.
+ */
 function inicializar() {
   cargarNuevoCaptcha();
 
-  // Listener para el botón de verificar
+  // Asignación de evento para la verificación manual mediante clic.
   document.getElementById('btn-verificar').addEventListener('click', function() {
     const intento = document.getElementById('intento-usuario').value;
     verificarCaptcha(intento);
   });
 
-  // Botón para refrescar si no se ve bien la imagen o si ya has perdido
+  // Listener para refrescar el captcha en casos de ilegibilidad o bloqueo.
   document.getElementById('btn-recargar').addEventListener('click', function() {
     cargarNuevoCaptcha();
   });
   
-  // Permitir verificar pulsando Enter, que es más cómodo para el usuario
+  // Mejora de UX: Permitir el envío del formulario mediante la tecla Enter.
   document.getElementById('intento-usuario').addEventListener('keypress', function(e) {
     if (e.key === 'Enter') {
       const intento = this.value;
@@ -30,9 +47,14 @@ function inicializar() {
   });
 }
 
-// Carga imagen y resetea contadores
-// Esta función es asíncrona porque tiene que pedirle la imagen al Python
+// --- LÓGICA DE RED Y DOM ---
+
+/**
+ * Solicita un nuevo captcha al microservicio de Python.
+ * Gestiona el estado de carga (spinners) y reinicia los contadores de juego.
+ */
 async function cargarNuevoCaptcha() {
+  // Referencias a elementos del DOM para manipulación directa.
   const imgElement = document.getElementById('imagen-captcha');
   const spinner = document.getElementById('spinner-carga');
   const resultadoDiv = document.getElementById('resultado');
@@ -40,116 +62,130 @@ async function cargarNuevoCaptcha() {
   const btnVerificar = document.getElementById('btn-verificar');
   const badgeIntentos = document.getElementById('badge-intentos');
 
-  // --- RESETER ESTADO ---
-  // Importante: cada vez que cargamos, reiniciamos las vidas y limpiamos inputs
-  intentosRestantes = MAX_INTENTOS; // Volvemos a 3 intentos
+  // [RESET DE ESTADO]
+  // Es crítico reiniciar las condiciones de victoria/derrota al cargar una nueva instancia.
+  intentosRestantes = MAX_INTENTOS;
   inputUsuario.value = "";
-  inputUsuario.disabled = false;    // Habilitamos input por si estaba bloqueado de antes
-  btnVerificar.disabled = false;    // Habilitamos botón
-  inputUsuario.focus();             // Ponemos el foco ahí para escribir directo
+  inputUsuario.disabled = false;    // Reactivación de inputs tras un posible bloqueo anterior.
+  btnVerificar.disabled = false;    
+  inputUsuario.focus();             // Foco automático para mejorar la accesibilidad y velocidad.
   resultadoDiv.innerHTML = "";
   
-  // Actualizar visual del contador (colores y texto)
+  // Sincronización visual del contador de intentos.
   actualizarBadgeIntentos();
 
-  // Interfaz de carga: ocultamos imagen vieja, mostramos spinner
+  // Gestión visual de la carga asíncrona (UX).
   imgElement.style.display = 'none';
   spinner.style.display = 'block';
 
   try {
-    // Pedimos el captcha al backend (Python/Flask)
+    // Petición asíncrona al endpoint de generación.
+    // Se espera un JSON con la imagen en base64 y la solución.
     let respuesta = await fetch(`${URL_PYTHON}/captcha`);
     let data = await respuesta.json();
 
     if (data.error) throw new Error(data.error);
 
-    // La imagen viene en base64, así que se la enchufamos directo al src
+    // Inyección directa del stream base64 en el source de la imagen.
     imgElement.src = "data:image/png;base64," + data.img;
     solucionCorrecta = data.solucion;
     
-    // Debug: Esto déjalo para desarrollo, pero quítalo en producción para que no hagan trampas mirando la consola ;)
+    // [DEBUG] Solo visible en entornos de desarrollo.
+    // Permite verificar la integridad de la red neuronal generadora sin resolver el puzzle visualmente.
     console.log("Solución (Debug):", solucionCorrecta);
 
-    // Esperamos a que la imagen cargue de verdad para quitar el spinner
+    // Evento onload: Aseguramos que el spinner solo desaparezca cuando la imagen esté renderizada.
     imgElement.onload = () => {
         spinner.style.display = 'none';
         imgElement.style.display = 'block';
     };
 
   } catch (error) {
-    console.error("Error:", error);
+    // Gestión de errores de red o del backend.
+    console.error("Excepción capturada en fetch:", error);
     spinner.style.display = 'none';
-    resultadoDiv.innerHTML = "<span class='text-danger'>Error de conexión</span>";
+    resultadoDiv.innerHTML = "<span class='text-danger'>Error de conexión con el servicio de IA</span>";
   }
 }
 
-// Lógica de verificación
+// --- LÓGICA DE CAPTCHA ---
+
+/**
+ * Compara el input del usuario con la solución almacenada.
+ * Gestiona las transiciones de estado (Ganar, Perder Vida, Game Over).
+ * @param {string} intento - Valor introducido por el usuario.
+ */
 function verificarCaptcha(intento) {
   const resultadoDiv = document.getElementById('resultado');
   const inputUsuario = document.getElementById('intento-usuario');
   const btnVerificar = document.getElementById('btn-verificar');
 
-  // Validar que haya escrito algo, no gastemos intentos a lo tonto
+  // Validación básica de entrada: Evitar penalización por inputs vacíos.
   if (!intento || intento.trim() === "") {
-     return; // No hacemos nada si está vacío
+     return; 
   }
 
-  // --- CASO 1: ACIERTO ---
-  // Comparamos lo que escribió con lo que guardamos antes
+  // ESCENARIO 1: ACIERTO
+  // Se normalizan ambas cadenas (trim) para evitar errores por espacios accidentales.
   if (intento.trim() === solucionCorrecta.trim()) {
     resultadoDiv.innerHTML = `
         <span class='text-success'>✅ ¡CORRECTO!</span>
-        <div class='fs-6 text-muted'>Eres humano.</div>
+        <div class='fs-6 text-muted'>Validación biométrica (simulada) exitosa.</div>
     `;
-    inputUsuario.disabled = true; // Bloqueamos para que no siga jugando si ya ganó
+    // Bloqueo de controles para finalizar el flujo.
+    inputUsuario.disabled = true; 
     btnVerificar.disabled = true;
     return;
   } 
 
-  // --- CASO 2: FALLO ---
-  // Restamos un intento
+  // ESCENARIO 2: FALLO
   intentosRestantes--;
-  actualizarBadgeIntentos(); // Actualizamos el color y texto del badge
+  actualizarBadgeIntentos(); 
 
   if (intentosRestantes > 0) {
-    // Todavía le quedan vidas
-    inputUsuario.value = ""; // Borramos lo que escribió para que intente de nuevo rápido
+    // Flujo de reintento: Limpiamos input y mantenemos foco.
+    inputUsuario.value = ""; 
     inputUsuario.focus();
     resultadoDiv.innerHTML = `
         <span class='text-warning fs-4'>❌ Incorrecto</span>
         <div class='fs-6 text-muted'>Inténtalo de nuevo.</div>
     `;
   } else {
-    // --- CASO 3: GAME OVER (0 intentos) ---
-    // Se acabó, bloqueamos todo y le chivamos la solución
+    // ESCENARIO 3: GAME OVER
+    // Se agotan los intentos. Se revela la solución para feedback del usuario.
     inputUsuario.disabled = true;
     btnVerificar.disabled = true;
     
     resultadoDiv.innerHTML = `
         <span class='text-danger'>⛔ Se acabaron los intentos</span>
         <div class='fs-4 text-primary mt-2'>La solución era: <b>${solucionCorrecta}</b></div>
-        <div class='fs-6 text-muted'>Pulsa "Generar nuevo" para reintentar.</div>
+        <div class='fs-6 text-muted'>Pulsa "Generar nuevo" para reiniciar el ciclo.</div>
     `;
   }
 }
 
-// Función auxiliar para colorear el badge según los intentos
-// Esto es pura cosmética para dar feedback visual (verde -> amarillo -> rojo)
+// --- UTILIDADES DE UI ---
+
+/**
+ * Actualiza la interfaz gráfica del contador de intentos.
+ * Aplica clases de Bootstrap dinámicamente para feedback semántico (Verde -> Amarillo -> Rojo).
+ */
 function actualizarBadgeIntentos() {
     const badge = document.getElementById('badge-intentos');
     badge.innerText = `Intentos restantes: ${intentosRestantes}`;
     
-    // Cambiar colores dinámicamente reseteando clases
-    badge.className = 'badge mb-2 fs-6 '; // Clases base
+    // Limpieza y asignación de clases base.
+    badge.className = 'badge mb-2 fs-6 '; 
     
+    // Lógica de semáforo para el feedback visual.
     if (intentosRestantes === 3) {
-        badge.classList.add('bg-success'); // Verde
+        badge.classList.add('bg-success'); // Estado óptimo
     } else if (intentosRestantes === 2) {
-        badge.classList.add('bg-warning', 'text-dark'); // Amarillo (con texto oscuro para contraste)
+        badge.classList.add('bg-warning', 'text-dark'); // Advertencia
     } else if (intentosRestantes === 1) {
-        badge.classList.add('bg-danger'); // Rojo (peligro)
+        badge.classList.add('bg-danger'); // Estado crítico
     } else {
-        badge.classList.add('bg-secondary'); // Gris (0 intentos, muerto)
+        badge.classList.add('bg-secondary'); // Estado inactivo
     }
 }
 
