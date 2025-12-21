@@ -1,4 +1,6 @@
-// Objeto que almacena los nombres de las empresas y sus símbolos bursátiles
+// Objeto maestro de configuración.
+// Mapea el nombre legible de la empresa con su Ticker oficial en Yahoo Finance.
+// Se ha estructurado en niveles para permitir la creación de <optgroup> en el HTML.
 const empresas = {
   "Empresas de España": {
     "Acciona": "ANA.MC",
@@ -79,41 +81,45 @@ const empresas = {
   }
 };
 
-// Función que crea el elemento <select> con las opciones de empresas y sus respectivos símbolos
+// Función encargada de poblar dinámicamente el selector del DOM.
 function crearSelect() {
   const select = document.getElementById('empresa'); // Referencia al elemento <select> en el DOM
 
-  // Establece una opción por defecto deshabilitada
+  // Establece una opción por defecto deshabilitada para forzar una elección consciente del usuario
   select.innerHTML = `<option value="" selected disabled>Selecciona una empresa...</option>`;
 
-  // Itera sobre los grupos de empresas (por país)
+  // Recorrido jerárquico del objeto 'empresas'.
+  // Primer nivel: Región/País -> Crea <optgroup>
   for (grupo in empresas) {
-    select.innerHTML += `<optgroup label="${grupo}">`; // Crea un grupo de opciones (<optgroup>) para cada país
+    select.innerHTML += `<optgroup label="${grupo}">`; 
+    // Segundo nivel: Empresa -> Crea <option>
     for (empresa in empresas[grupo]) {
       const simbolo = empresas[grupo][empresa]; // Obtiene el símbolo bursátil de la empresa
       select.innerHTML += `<option value="${simbolo}">${empresa}</option>`; // Añade cada empresa como una opción del select
     }
-    select.innerHTML += `</optgroup>`; // Cierra el grupo de opciones
+    select.innerHTML += `</optgroup>`; // Cierre correcto de la etiqueta de grupo
   }
 
-  // Añade un evento para detectar cambios en la selección del <select>
+  // Listener para disparar la petición en cuanto el usuario modifica el valor del selector
   select.addEventListener('change', function() {
-    obtenerGrafica(this.value); // Llama a la función para obtener la gráfica financiera
+    obtenerGrafica(this.value); // 'this.value' contiene el ticker (ej: SAN.MC)
   });
 }
 
 // Función que solicita la gráfica financiera de la empresa seleccionada y la muestra
 function obtenerGrafica(empresa) {  
-  finanzas = document.getElementById('finanzas'); // Referencia al elemento donde se mostrará la gráfica
+  finanzas = document.getElementById('finanzas'); // Referencia al contenedor de visualización
 
-  // Establece el contenido del elemento como una imagen (gráfica) obtenida desde la URL del servidor Python
+  // Inyección directa de HTML.
+  // IMPORTANTE: La URL apunta a un endpoint de Python que devuelve un stream de bytes (imagen PNG).
+  // No se descarga un fichero, se renderiza directamente en el navegador.
   finanzas.innerHTML = `<img src="${URL_PYTHON}/finanzas/grafica?empresa=${empresa}" class="img-fluid">`;
 }
 
-// Función que inicializa la aplicación creando el select de empresas
+// Función de arranque (entry point) para garantizar que el DOM esté listo antes de manipularlo
 function inicializa() {
   crearSelect(); // Llama a la función para crear el <select> de empresas
 }
 
-// Llama a la función de inicialización cuando se carga el script
+// Ejecución inmediata al cargar el script
 inicializa();
