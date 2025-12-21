@@ -13,7 +13,7 @@ import os
 import time
 from io import BytesIO
 
-# --- Configuración y Constantes del Modelo ---
+# Constantes de configuración y rutas de persistencia del modelo
 NOMBRE_ARCHIVO_GENERADOR = "modelos/moda_generador_150e.keras"
 
 BATCH_SIZE = 64

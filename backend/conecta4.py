@@ -18,7 +18,7 @@ random.seed(seed)
 np.random.seed(seed)
 tf.random.set_seed(seed)
 
-# --- Constantes y Rutas ---
+# Constantes de configuración y rutas de persistencia del modelo
 ARCHIVO_MODELO_C4 = 'modelos/conecta4_v2.keras'
 ARCHIVO_DATOS_C4 = 'csv/conecta4_v2.csv'
 

@@ -13,7 +13,7 @@ import os
 import time
 from io import BytesIO
 
-# Definición de rutas y constantes del sistema
+# Constantes de configuración y rutas de persistencia del modelo
 NOMBRE_ARCHIVO_GENERADOR = "modelos/captcha_generador_v2_100e.keras"
 NOMBRE_ARCHIVO_LECTOR = "modelos/captcha_lector_v2.keras"
 
