@@ -4,10 +4,6 @@
  * peticiones a la API y renderiza los resultados asíncronos.
  */
 
-// Variable global para gestionar el temporizador del patrón Debounce.
-// Esto evita realizar una petición por cada pulsación de tecla, esperando a que el usuario deje de escribir.
-var timeout; 
-
 // Función de inicialización de los escuchadores de eventos (Event Listeners)
 function inicializar() {
   
