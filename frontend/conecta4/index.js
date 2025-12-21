@@ -1,9 +1,15 @@
 const FILAS = 6;
 const COLUMNAS = 7;
+// Representación lógica del estado del juego: Matriz de 6x7.
 let tablero = []; 
 let juegoActivo = true;
+// Flag para evitar entradas del usuario mientras la IA "piensa" o se actualiza la UI.
 let turnoBloqueado = false;
 
+/**
+ * Inicializa el estado lógico y visual del tablero.
+ * Se encarga de limpiar el contenedor y regenerar la estructura DOM.
+ */
 function inicializarTablero() {
     const contenedor = document.getElementById('tablero');
     contenedor.innerHTML = '';
@@ -11,19 +17,23 @@ function inicializarTablero() {
 
     for (let r = 0; r < FILAS; r++) {
         let filaLogica = [];
+        // Contenedor visual para la fila (Bootstrap flex)
         let filaVisual = document.createElement('div');
         filaVisual.className = 'd-flex justify-content-center';
         
         for (let c = 0; c < COLUMNAS; c++) {
-            filaLogica.push(0);
+            filaLogica.push(0); // 0 representa casilla vacía
             
+            // Creación de la celda visual
             let celda = document.createElement('div');
             celda.className = 'bg-light border border-2 border-dark rounded-circle m-1';
             celda.style.width = '60px';
             celda.style.height = '60px';
             celda.style.cursor = 'pointer';
             
+            // Vinculación del evento de clic a la columna correspondiente
             celda.onclick = () => realizarJugadaHumano(c);
+            // Identificador único para actualizaciones directas del DOM
             celda.id = `celda-${r}-${c}`;
             
             filaVisual.appendChild(celda);
@@ -36,6 +46,10 @@ function inicializarTablero() {
     actualizarEstado("Tu turno (Rojo)", "alert-info");
 }
 
+/**
+ * Sincroniza la matriz lógica `tablero` con la representación visual.
+ * Se itera sobre todas las celdas para aplicar las clases de color correspondientes.
+ */
 function actualizarTableroVisual() {
     for (let r = 0; r < FILAS; r++) {
         for (let c = 0; c < COLUMNAS; c++) {
@@ -45,23 +59,29 @@ function actualizarTableroVisual() {
             if (tablero[r][c] === 0) {
                 celda.classList.add('bg-light');
             } else if (tablero[r][c] === 1) {
-                celda.classList.add('bg-danger'); // Jugador
+                celda.classList.add('bg-danger'); // Jugador 1 (Humano)
             } else if (tablero[r][c] === 2) {
-                celda.classList.add('bg-warning'); // IA
+                celda.classList.add('bg-warning'); // Jugador 2 (IA)
             }
         }
     }
 }
 
+/**
+ * Gestiona el flujo del turno del jugador humano.
+ * Incluye validaciones de estado y llamadas asíncronas a la IA.
+ */
 async function realizarJugadaHumano(col) {
     if (!juegoActivo || turnoBloqueado) return;
 
+    // Intenta colocar la ficha física
     if (colocarFicha(col, 1)) {
         actualizarTableroVisual();
         
-        // Verificamos si ganó el humano (Jugador 1)
+        // Verificamos condición de victoria post-movimiento
         if (verificarFinJuego(1)) return;
 
+        // Bloqueo de UI e inicio del turno de la IA
         turnoBloqueado = true;
         actualizarEstado("Pensando...", "alert-secondary");
         
@@ -70,12 +90,18 @@ async function realizarJugadaHumano(col) {
         } catch (error) {
             console.error(error);
             actualizarEstado("Error de conexión", "alert-dark");
+            // Liberamos el turno en caso de fallo crítico para permitir reintento o reinicio
             turnoBloqueado = false;
         }
     }
 }
 
+/**
+ * Lógica del agente inteligente.
+ * Serializa el tablero y consulta al endpoint de Python para obtener el siguiente movimiento.
+ */
 async function realizarJugadaIA() {
+    // Aplanamos la matriz para facilitar el transporte vía query param (formato CSV simple)
     const arrayPlano = tablero.flat();
     const tableroStr = arrayPlano.join(',');
 
@@ -90,17 +116,17 @@ async function realizarJugadaIA() {
 
         const colIA = datos.columna;
 
+        // Introducimos un delay artificial (400ms) para mejorar la UX (evita parpadeos instantáneos)
         setTimeout(() => {
             if (colocarFicha(colIA, 2)) {
                 actualizarTableroVisual();
-                // Verificamos si ganó la IA (Jugador 2)
+                // Verificación de victoria para la IA
                 if (!verificarFinJuego(2)) {
                     actualizarEstado("Tu turno (Rojo)", "alert-info");
                     turnoBloqueado = false;
                 }
             } else {
-                // Si la columna está llena, intentamos mover en la primera libre (fallback simple)
-                // Esto es raro que pase si la IA está bien entrenada
+                // Fallback de seguridad: columna llena (edge case poco probable con modelo entrenado)
                 turnoBloqueado = false; 
             }
         }, 400);
@@ -111,6 +137,10 @@ async function realizarJugadaIA() {
     }
 }
 
+/**
+ * Simula la gravedad del juego.
+ * Recorre la columna desde abajo hacia arriba para encontrar el primer hueco disponible.
+ */
 function colocarFicha(col, jugador) {
     for (let r = FILAS - 1; r >= 0; r--) {
         if (tablero[r][col] === 0) {
@@ -122,8 +152,13 @@ function colocarFicha(col, jugador) {
 }
 
 // --- LÓGICA DE VICTORIA ---
+
+/**
+ * Orquestador de fin de juego.
+ * Comprueba victoria o empate y actualiza la UI acorde.
+ */
 function verificarFinJuego(jugador) {
-    // 1. Comprobar victoria
+    // 1. Comprobar victoria algorítmica
     if (comprobarVictoria(jugador)) {
         if (jugador === 1) {
             actualizarEstado("¡Felicidades! Has ganado 🎉", "alert-success");
@@ -134,7 +169,7 @@ function verificarFinJuego(jugador) {
         return true;
     }
 
-    // 2. Comprobar empate
+    // 2. Comprobar empate (tablero lleno sin ganador)
     if (tablero.flat().every(c => c !== 0)) {
         actualizarEstado("¡Empate!", "alert-dark");
         juegoActivo = false;
@@ -144,6 +179,10 @@ function verificarFinJuego(jugador) {
     return false;
 }
 
+/**
+ * Algoritmo de comprobación de patrones ganadores (4 en raya).
+ * Verifica direcciones: Horizontal, Vertical y ambas Diagonales.
+ */
 function comprobarVictoria(jugador) {
     // Horizontales
     for (let r = 0; r < FILAS; r++) {
@@ -194,4 +233,5 @@ function reiniciarJuego() {
     inicializarTablero();
 }
 
+// Inicialización automática al cargar el script
 inicializarTablero();
