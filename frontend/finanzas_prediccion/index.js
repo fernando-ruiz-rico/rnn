@@ -119,7 +119,7 @@ function obtenerGrafica(empresa) {
   // Feedback inmediato al usuario mediante Spinner de Bootstrap
   finanzas.innerHTML = `
     <div class="fs-5 text-center">
-      <p>Realizando predicción precios de acciones para el próximo año.<br>
+      <p>Realizando predicción precios de acciones.<br>
          Esto puede tardar unos minutos...</p>
       <div class="spinner-border" role="status">
         <span class="visually-hidden">Cargando...</span>
