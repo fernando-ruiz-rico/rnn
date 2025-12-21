@@ -1,4 +1,5 @@
-// Objeto que almacena los nombres de las empresas y sus símbolos bursátiles
+// Diccionario maestro de empresas mapeado a sus tickers (símbolos) compatibles con Yahoo Finance.
+// Separado por geografía para organizar los optgroups en el frontend.
 const empresas = {
   "Empresas de Estados Unidos": {
     "3M": "MMM",
@@ -79,34 +80,43 @@ const empresas = {
   }
 };
 
-// Función que crea el elemento <select> con las opciones de empresas y sus respectivos símbolos
+/**
+ * Genera dinámicamente el elemento <select> en el DOM basado en el objeto 'empresas'.
+ * Utiliza <optgroup> para mantener la jerarquía visual por país.
+ */
 function crearSelect() {
-  const select = document.getElementById('empresa'); // Referencia al elemento <select> en el DOM
+  const select = document.getElementById('empresa'); // Referencia al nodo del DOM
 
-  // Establece una opción por defecto deshabilitada
+  // Placeholder inicial para forzar una selección consciente del usuario
   select.innerHTML = `<option value="" selected disabled>Selecciona una empresa...</option>`;
 
-  // Itera sobre los grupos de empresas (por país)
+  // Iteración sobre claves geográficas
   for (grupo in empresas) {
-    select.innerHTML += `<optgroup label="${grupo}">`; // Crea un grupo de opciones (<optgroup>) para cada país
+    select.innerHTML += `<optgroup label="${grupo}">`; 
     for (empresa in empresas[grupo]) {
-      const simbolo = empresas[grupo][empresa]; // Obtiene el símbolo bursátil de la empresa
-      select.innerHTML += `<option value="${simbolo}">${empresa}</option>`; // Añade cada empresa como una opción del select
+      const simbolo = empresas[grupo][empresa]; 
+      // Inyección del valor (ticker) y texto visible (nombre humano)
+      select.innerHTML += `<option value="${simbolo}">${empresa}</option>`; 
     }
-    select.innerHTML += `</optgroup>`; // Cierra el grupo de opciones
+    select.innerHTML += `</optgroup>`; 
   }
 
-  // Añade un evento para detectar cambios en la selección del <select>
+  // Listener para disparar la petición en cuanto cambia el valor
   select.addEventListener('change', function() {
-    obtenerGrafica(this.value); // Llama a la función para obtener la gráfica financiera
+    obtenerGrafica(this.value); 
   });
 }
 
-// Función que solicita la gráfica financiera de la empresa seleccionada y la muestra
+/**
+ * Gestiona la petición asíncrona de la imagen generada por Python.
+ * Incluye gestión de estado de carga (loading spinner) dado que el entrenamiento
+ * de la red neuronal en backend provoca latencia.
+ * @param {string} empresa - Ticker de la empresa (ej: 'AAPL')
+ */
 function obtenerGrafica(empresa) {
   const finanzas = document.getElementById('finanzas');
   
-  // Muestra el spinner (aquí se usa Bootstrap, pero puedes usar otro spinner o CSS personalizado)
+  // Feedback inmediato al usuario mediante Spinner de Bootstrap
   finanzas.innerHTML = `
     <div class="fs-5 text-center">
       <p>Realizando predicción precios de acciones para el próximo año.<br>
@@ -116,28 +126,28 @@ function obtenerGrafica(empresa) {
       </div>
     </div>`;
   
-  // Crea un objeto Image para cargar la imagen
+  // Uso del objeto Image para precarga y gestión de eventos onload/onerror
   const img = new Image();
+  // Asumimos que URL_PYTHON está definida globalmente o inyectada en el entorno
   img.src = `${URL_PYTHON}/finanzas_prediccion/grafica?empresa=${empresa}`;
   img.className = "img-fluid";
   
-  // Cuando la imagen se carga, se reemplaza el spinner con la imagen
+  // Callback: Reemplazo del spinner solo cuando la imagen está totalmente recibida
   img.onload = function() {
-    finanzas.innerHTML = ''; // Limpia el spinner
-    finanzas.appendChild(img); // Muestra la imagen cargada
+    finanzas.innerHTML = ''; // Limpieza del contenedor
+    finanzas.appendChild(img); // Inserción limpia
   };
   
-  // Opcional: manejo de error en caso de que la imagen no se cargue
+  // Gestión básica de errores de red o servidor
   img.onerror = function() {
-    finanzas.innerHTML = 'Error al cargar la imagen.';
+    finanzas.innerHTML = '<div class="alert alert-danger">Error al cargar la imagen. Inténtelo de nuevo.</div>';
   };
 }
 
 
-// Función que inicializa la aplicación creando el select de empresas
+// Punto de entrada: Inicialización de componentes al cargar el script
 function inicializa() {
-  crearSelect(); // Llama a la función para crear el <select> de empresas
+  crearSelect(); 
 }
 
-// Llama a la función de inicialización cuando se carga el script
 inicializa();
