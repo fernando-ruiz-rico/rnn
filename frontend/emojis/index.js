@@ -1,6 +1,3 @@
-// Variable global para gestionar el temporizador del patrón Debounce.
-let timeout;
-
 // Función que inicializa el evento de entrada en el campo de texto.
 // Configura los listeners necesarios para la interacción del usuario.
 function inicializar() {
