@@ -121,7 +121,7 @@ function colocarFicha(col, jugador) {
     return false;
 }
 
-// --- NUEVA LÓGICA DE VICTORIA ---
+// --- LÓGICA DE VICTORIA ---
 function verificarFinJuego(jugador) {
     // 1. Comprobar victoria
     if (comprobarVictoria(jugador)) {

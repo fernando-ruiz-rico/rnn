@@ -48,13 +48,12 @@ async function cargarNuevoCaptcha() {
 
   try {
     // LLAMADA AL NUEVO ENDPOINT V2
-    // Asegúrate de que URL_PYTHON esté definido en variables.js
     let respuesta = await fetch(`${URL_PYTHON}/captcha_v2`); 
     let data = await respuesta.json();
 
     if (data.error) throw new Error(data.error);
 
-    // Nota: Las claves JSON deben coincidir con tu backend (imagen_base64, solucion_real)
+    // Nota: Las claves JSON deben coincidir con el backend (imagen_base64, solucion_real)
     imgElement.src = "data:image/png;base64," + data.img;
     solucionCorrecta = data.solucion; // Esperamos un Array: ["Camiseta", "Bota", ...]
     
